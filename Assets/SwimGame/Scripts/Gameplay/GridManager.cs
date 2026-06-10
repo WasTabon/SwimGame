@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private Transform cellsContainer;
 
     private ParsedLevel level;
+    private readonly Dictionary<Vector2Int, SwimmerBase> occupancy = new Dictionary<Vector2Int, SwimmerBase>();
 
     public int Width => level.width;
     public int Height => level.height;
@@ -23,9 +25,15 @@ public class GridManager : MonoBehaviour
     public void Build(ParsedLevel parsedLevel)
     {
         level = parsedLevel;
+        occupancy.Clear();
+
         for (int i = cellsContainer.childCount - 1; i >= 0; i--)
         {
-            Destroy(cellsContainer.GetChild(i).gameObject);
+            var child = cellsContainer.GetChild(i);
+            child.DOKill();
+            var sr = child.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.DOKill();
+            Destroy(child.gameObject);
         }
 
         for (int x = 0; x < level.width; x++)
@@ -55,6 +63,31 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void ClearSwimmers()
+    {
+        occupancy.Clear();
+    }
+
+    public void RegisterSwimmer(SwimmerBase swimmer, Vector2Int cell)
+    {
+        occupancy[cell] = swimmer;
+    }
+
+    public void MoveSwimmer(SwimmerBase swimmer, Vector2Int from, Vector2Int to)
+    {
+        if (occupancy.TryGetValue(from, out var existing) && existing == swimmer)
+        {
+            occupancy.Remove(from);
+        }
+        occupancy[to] = swimmer;
+    }
+
+    public SwimmerBase GetSwimmerAt(Vector2Int cell)
+    {
+        occupancy.TryGetValue(cell, out var swimmer);
+        return swimmer;
     }
 
     public Vector3 GridToWorld(Vector2Int cell)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class LevelLoader : MonoBehaviour
@@ -11,60 +12,99 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private CameraController cameraController;
     [SerializeField] private InputController inputController;
     [SerializeField] private GameHUD hud;
+    [SerializeField] private TurnManager turnManager;
+    [SerializeField] private WinPopup winPopup;
+    [SerializeField] private LosePopup losePopup;
+    [SerializeField] private Transform swimmersContainer;
+
+    private readonly List<SwimmerBase> swimmers = new List<SwimmerBase>();
+    private LevelData currentLevel;
 
     private void Start()
     {
-        LevelData data = SelectedLevel != null ? SelectedLevel : defaultLevel;
-        Debug.Assert(data != null, "No level assigned to LevelLoader!");
-
-        ParsedLevel parsed = data.Parse();
-        gridManager.Build(parsed);
-        player.Init(gridManager, parsed.playerStart);
-        highlighter.Init(gridManager);
-        highlighter.Refresh(player.GridPosition);
-        cameraController.Setup(gridManager, player.transform.position);
-        hud.Setup(data.levelName);
+        currentLevel = SelectedLevel != null ? SelectedLevel : defaultLevel;
+        Debug.Assert(currentLevel != null, "No level assigned to LevelLoader!");
 
         inputController.OnCellTapped -= HandleCellTapped;
         inputController.OnCellTapped += HandleCellTapped;
-        player.OnMoveCompleted -= HandleMoveCompleted;
-        player.OnMoveCompleted += HandleMoveCompleted;
+        turnManager.OnWin -= HandleWin;
+        turnManager.OnWin += HandleWin;
+        turnManager.OnLose -= HandleLose;
+        turnManager.OnLose += HandleLose;
+
+        BuildLevel();
     }
 
     private void OnDestroy()
     {
         if (inputController != null) inputController.OnCellTapped -= HandleCellTapped;
-        if (player != null) player.OnMoveCompleted -= HandleMoveCompleted;
-    }
-
-    private void HandleCellTapped(Vector2Int cell)
-    {
-        if (player.IsMoving) return;
-
-        int manhattan = Mathf.Abs(cell.x - player.GridPosition.x) + Mathf.Abs(cell.y - player.GridPosition.y);
-        bool validMove = manhattan == 1 && gridManager.IsWalkable(cell);
-
-        if (!validMove)
+        if (turnManager != null)
         {
-            SoundManager.Instance.PlaySfx(SfxType.Deny);
-            return;
+            turnManager.OnWin -= HandleWin;
+            turnManager.OnLose -= HandleLose;
         }
-
-        highlighter.Hide();
-        hud.IncrementMoves();
-        player.MoveTo(cell);
     }
 
-    private void HandleMoveCompleted()
+    private void BuildLevel()
     {
+        ParsedLevel parsed = currentLevel.Parse();
+        gridManager.Build(parsed);
+        SpawnSwimmers(parsed);
+        player.Init(gridManager, parsed.playerStart);
+        highlighter.Init(gridManager);
         highlighter.Refresh(player.GridPosition);
-        cameraController.EnsureVisible(player.transform.position);
+        cameraController.Setup(gridManager, player.transform.position);
+        hud.Setup(currentLevel.levelName);
+        turnManager.Setup(swimmers);
+    }
+
+    private void SpawnSwimmers(ParsedLevel parsed)
+    {
+        foreach (var swimmer in swimmers)
+        {
+            if (swimmer != null) Destroy(swimmer.gameObject);
+        }
+        swimmers.Clear();
+        gridManager.ClearSwimmers();
+
+        foreach (var spawn in parsed.swimmers)
+        {
+            var go = new GameObject("Swimmer_" + spawn.type);
+            go.transform.SetParent(swimmersContainer, false);
+            SwimmerBase swimmer;
+            switch (spawn.type)
+            {
+                default:
+                    swimmer = go.AddComponent<LinearSwimmer>();
+                    break;
+            }
+            swimmer.Init(gridManager, spawn.position, spawn.direction);
+            swimmers.Add(swimmer);
+        }
+    }
+
+    public void RestartLevel()
+    {
+        BuildLevel();
     }
 
     public void DoWait()
     {
-        if (player.IsMoving) return;
-        hud.IncrementMoves();
-        player.Wait();
+        turnManager.TryWait();
+    }
+
+    private void HandleCellTapped(Vector2Int cell)
+    {
+        turnManager.TryPlayerMove(cell);
+    }
+
+    private void HandleWin()
+    {
+        winPopup.ShowWithMoves(hud.MovesCount);
+    }
+
+    private void HandleLose()
+    {
+        losePopup.Show();
     }
 }

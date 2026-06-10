@@ -35,6 +35,7 @@ public class CameraController : MonoBehaviour
         float neededSize = Mathf.Max(neededHalfHeight, neededHalfHeightFromWidth);
 
         moveTween?.Kill();
+        transform.DOKill();
 
         if (neededSize <= MaxOrthoSize)
         {
@@ -48,6 +49,14 @@ public class CameraController : MonoBehaviour
             cam.orthographicSize = MaxOrthoSize;
             transform.position = ClampPosition(new Vector3(focusPos.x, focusPos.y, -10f));
         }
+    }
+
+    public void Shake()
+    {
+        moveTween?.Kill();
+        Vector3 original = transform.position;
+        transform.DOShakePosition(0.45f, 0.3f, 25, 90f, false, true)
+            .OnComplete(() => transform.position = original);
     }
 
     public void BeginDrag(Vector3 screenPos)

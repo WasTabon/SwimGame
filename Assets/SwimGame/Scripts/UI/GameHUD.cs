@@ -9,14 +9,18 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI movesText;
     [SerializeField] private Button backButton;
     [SerializeField] private Button waitButton;
+    [SerializeField] private Button restartButton;
     [SerializeField] private LevelLoader levelLoader;
 
     private int moves;
+
+    public int MovesCount => moves;
 
     private void Awake()
     {
         backButton.onClick.AddListener(OnBack);
         waitButton.onClick.AddListener(OnWait);
+        restartButton.onClick.AddListener(OnRestart);
     }
 
     public void Setup(string levelName)
@@ -42,5 +46,10 @@ public class GameHUD : MonoBehaviour
     private void OnWait()
     {
         levelLoader.DoWait();
+    }
+
+    private void OnRestart()
+    {
+        levelLoader.RestartLevel();
     }
 }

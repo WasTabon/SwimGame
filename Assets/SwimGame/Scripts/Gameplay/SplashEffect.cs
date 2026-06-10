@@ -4,7 +4,7 @@ public static class SplashEffect
 {
     private static Material material;
 
-    public static void Play(Vector3 position)
+    public static void Play(Vector3 position, float intensity = 1f)
     {
         var go = new GameObject("Splash");
         go.transform.position = position;
@@ -16,14 +16,14 @@ public static class SplashEffect
         main.loop = false;
         main.playOnAwake = false;
         main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.4f);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(1f, 2.4f);
-        main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.15f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(1f * intensity, 2.4f * intensity);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.06f * intensity, 0.15f * intensity);
         main.startColor = new Color(0.8f, 0.93f, 1f, 0.9f);
         main.gravityModifier = 1.6f;
 
         var emission = ps.emission;
         emission.rateOverTime = 0f;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 12) });
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)Mathf.RoundToInt(12 * intensity)) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Circle;

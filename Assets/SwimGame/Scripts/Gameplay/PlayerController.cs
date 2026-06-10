@@ -11,8 +11,6 @@ public class PlayerController : MonoBehaviour
     public Vector2Int GridPosition { get; private set; }
     public bool IsMoving { get; private set; }
 
-    public event System.Action OnMoveCompleted;
-
     private GridManager grid;
     private Transform visual;
     private Tween idleTween;
@@ -31,8 +29,22 @@ public class PlayerController : MonoBehaviour
     {
         grid = gridManager;
         GridPosition = start;
+        transform.DOKill();
+        KillVisualTweens();
+        IsMoving = false;
         transform.position = grid.GridToWorld(start);
+        visual.localPosition = Vector3.zero;
+        visual.localScale = Vector3.one * BaseScale;
+        visualRenderer.color = Color.white;
         StartIdle();
+    }
+
+    private void KillVisualTweens()
+    {
+        idleTween?.Kill();
+        squashSequence?.Kill();
+        visual.DOKill();
+        visualRenderer.DOKill();
     }
 
     private void StartIdle()
@@ -69,7 +81,6 @@ public class PlayerController : MonoBehaviour
         {
             IsMoving = false;
             StartIdle();
-            OnMoveCompleted?.Invoke();
         });
     }
 
@@ -92,7 +103,34 @@ public class PlayerController : MonoBehaviour
         {
             IsMoving = false;
             StartIdle();
-            OnMoveCompleted?.Invoke();
         });
+    }
+
+    public void PlayWinAnimation()
+    {
+        KillVisualTweens();
+        visual.localPosition = Vector3.zero;
+        visual.localScale = Vector3.one * BaseScale;
+
+        var seq = DOTween.Sequence();
+        seq.Append(visual.DOScale(Vector3.one * BaseScale * 1.2f, 0.15f).SetEase(Ease.OutBack));
+        seq.Append(visual.DOLocalMoveY(0.4f, 0.22f).SetEase(Ease.OutQuad));
+        seq.Append(visual.DOLocalMoveY(0f, 0.18f).SetEase(Ease.InQuad));
+        seq.AppendCallback(() => SplashEffect.Play(transform.position, 0.8f));
+        seq.Append(visual.DOLocalMoveY(0.22f, 0.16f).SetEase(Ease.OutQuad));
+        seq.Append(visual.DOLocalMoveY(0f, 0.14f).SetEase(Ease.InQuad));
+        seq.Join(visual.DOScale(Vector3.one * BaseScale, 0.2f).SetEase(Ease.OutBack));
+    }
+
+    public void PlayDeathAnimation()
+    {
+        KillVisualTweens();
+        transform.DOKill();
+        visual.localPosition = Vector3.zero;
+        visualRenderer.DOColor(new Color32(231, 76, 60, 255), 0.12f);
+
+        var seq = DOTween.Sequence();
+        seq.Append(visual.DOScale(Vector3.one * BaseScale * 1.3f, 0.1f).SetEase(Ease.OutQuad));
+        seq.Append(visual.DOScale(Vector3.zero, 0.35f).SetEase(Ease.InBack));
     }
 }

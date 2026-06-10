@@ -4,6 +4,15 @@ using UnityEngine;
 
 public enum CellType { Water, Wall, Exit }
 
+public enum SwimmerType { Linear }
+
+public class SwimmerSpawn
+{
+    public SwimmerType type;
+    public Vector2Int position;
+    public Vector2Int direction;
+}
+
 public class ParsedLevel
 {
     public int width;
@@ -11,6 +20,7 @@ public class ParsedLevel
     public CellType[,] cells;
     public Vector2Int playerStart;
     public Vector2Int exitPosition;
+    public List<SwimmerSpawn> swimmers = new List<SwimmerSpawn>();
 }
 
 [CreateAssetMenu(fileName = "Level", menuName = "SwimGame/Level Data")]
@@ -38,6 +48,16 @@ public class LevelData : ScriptableObject
         bool playerFound = false;
         bool exitFound = false;
 
+        void AddLinear(int x, int y, Vector2Int dir)
+        {
+            result.swimmers.Add(new SwimmerSpawn
+            {
+                type = SwimmerType.Linear,
+                position = new Vector2Int(x, y),
+                direction = dir
+            });
+        }
+
         for (int row = 0; row < height; row++)
         {
             string line = lines[row];
@@ -59,6 +79,22 @@ public class LevelData : ScriptableObject
                         result.cells[x, y] = CellType.Water;
                         result.playerStart = new Vector2Int(x, y);
                         playerFound = true;
+                        break;
+                    case '^':
+                        result.cells[x, y] = CellType.Water;
+                        AddLinear(x, y, Vector2Int.up);
+                        break;
+                    case 'v':
+                        result.cells[x, y] = CellType.Water;
+                        AddLinear(x, y, Vector2Int.down);
+                        break;
+                    case '<':
+                        result.cells[x, y] = CellType.Water;
+                        AddLinear(x, y, Vector2Int.left);
+                        break;
+                    case '>':
+                        result.cells[x, y] = CellType.Water;
+                        AddLinear(x, y, Vector2Int.right);
                         break;
                     default:
                         result.cells[x, y] = CellType.Water;
