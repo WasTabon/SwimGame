@@ -14,16 +14,22 @@ public class TurnManager : MonoBehaviour
     public event System.Action OnLose;
 
     private readonly List<SwimmerBase> swimmers = new List<SwimmerBase>();
+    private readonly List<Boat> boats = new List<Boat>();
+    private readonly List<TogglePlatform> platforms = new List<TogglePlatform>();
     private bool busy;
     private bool gameOver;
 
     public bool IsBusy => busy || gameOver;
 
-    public void Setup(List<SwimmerBase> levelSwimmers)
+    public void Setup(List<SwimmerBase> levelSwimmers, List<Boat> levelBoats, List<TogglePlatform> levelPlatforms)
     {
         StopAllCoroutines();
         swimmers.Clear();
         swimmers.AddRange(levelSwimmers);
+        boats.Clear();
+        boats.AddRange(levelBoats);
+        platforms.Clear();
+        platforms.AddRange(levelPlatforms);
         busy = false;
         gameOver = false;
     }
@@ -115,6 +121,68 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
+        foreach (var boat in boats)
+        {
+            boat.PlanAndMove(player.GridPosition);
+            if (boat.IsMoving) yield return new WaitForSeconds(0.05f);
+        }
+        yield return new WaitWhile(AnyBoatMoving);
+
+        Vector2Int playerCurrent = gridManager.GetCurrent(player.GridPosition);
+        if (playerCurrent != Vector2Int.zero)
+        {
+            Vector2Int dest = player.GridPosition + playerCurrent;
+            if (gridManager.IsWalkable(dest))
+            {
+                var hit = gridManager.GetSwimmerAt(dest);
+                player.MoveTo(dest);
+                yield return new WaitWhile(() => player.IsMoving);
+
+                if (hit != null)
+                {
+                    yield return LoseRoutine(hit);
+                    yield break;
+                }
+                if (player.GridPosition == gridManager.ExitPosition)
+                {
+                    yield return WinRoutine();
+                    yield break;
+                }
+                cameraController.EnsureVisible(player.transform.position);
+            }
+        }
+
+        SwimmerBase currentKiller = null;
+        foreach (var swimmer in swimmers)
+        {
+            Vector2Int flow = gridManager.GetCurrent(swimmer.GridPosition);
+            if (flow == Vector2Int.zero) continue;
+
+            Vector2Int dest = swimmer.GridPosition + flow;
+            if (!gridManager.IsWalkable(dest)) continue;
+            if (gridManager.GetSwimmerAt(dest) != null) continue;
+
+            swimmer.MoveTo(dest);
+            if (dest == player.GridPosition)
+            {
+                currentKiller = swimmer;
+                break;
+            }
+            yield return new WaitForSeconds(0.04f);
+        }
+        yield return new WaitWhile(AnySwimmerMoving);
+
+        if (currentKiller != null)
+        {
+            yield return LoseRoutine(currentKiller);
+            yield break;
+        }
+
+        foreach (var platform in platforms)
+        {
+            platform.Tick(player.GridPosition);
+        }
+
         highlighter.Refresh(player.GridPosition);
         busy = false;
     }
@@ -124,6 +192,15 @@ public class TurnManager : MonoBehaviour
         foreach (var swimmer in swimmers)
         {
             if (swimmer != null && swimmer.IsMoving) return true;
+        }
+        return false;
+    }
+
+    private bool AnyBoatMoving()
+    {
+        foreach (var boat in boats)
+        {
+            if (boat != null && boat.IsMoving) return true;
         }
         return false;
     }

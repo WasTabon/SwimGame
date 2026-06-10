@@ -13,6 +13,21 @@ public class SwimmerSpawn
     public Vector2Int direction;
 }
 
+public class BoatSpawn
+{
+    public Vector2Int anchor;
+    public int length;
+    public Vector2Int direction;
+}
+
+public class PlatformSpawn
+{
+    public Vector2Int cell;
+    public int openTurns;
+    public int closedTurns;
+    public int offset;
+}
+
 public class ParsedLevel
 {
     public int width;
@@ -22,6 +37,9 @@ public class ParsedLevel
     public Vector2Int exitPosition;
     public List<SwimmerSpawn> swimmers = new List<SwimmerSpawn>();
     public List<List<Vector2Int>> patrols = new List<List<Vector2Int>>();
+    public Dictionary<Vector2Int, Vector2Int> currents = new Dictionary<Vector2Int, Vector2Int>();
+    public List<BoatSpawn> boats = new List<BoatSpawn>();
+    public List<PlatformSpawn> platforms = new List<PlatformSpawn>();
 }
 
 [CreateAssetMenu(fileName = "Level", menuName = "SwimGame/Level Data")]
@@ -30,6 +48,9 @@ public class LevelData : ScriptableObject
     public string levelName = "Level";
     [TextArea(5, 30)] public string layout;
     public List<string> patrolRoutes = new List<string>();
+    public List<string> currentZones = new List<string>();
+    public List<string> boats = new List<string>();
+    public List<string> platforms = new List<string>();
 
     public ParsedLevel Parse()
     {
@@ -112,18 +133,93 @@ public class LevelData : ScriptableObject
             {
                 if (string.IsNullOrWhiteSpace(routeStr)) continue;
                 var points = new List<Vector2Int>();
-                foreach (var token in routeStr.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries))
+                foreach (var token in Tokens(routeStr))
                 {
-                    var parts = token.Split(',');
-                    if (parts.Length != 2) continue;
-                    points.Add(new Vector2Int(int.Parse(parts[0].Trim()), int.Parse(parts[1].Trim())));
+                    points.Add(ParsePoint(token));
                 }
                 if (points.Count >= 2) result.patrols.Add(points);
+            }
+        }
+
+        if (currentZones != null)
+        {
+            foreach (var zoneStr in currentZones)
+            {
+                if (string.IsNullOrWhiteSpace(zoneStr)) continue;
+                var tokens = Tokens(zoneStr);
+                if (tokens.Length < 3) continue;
+                Vector2Int a = ParsePoint(tokens[0]);
+                Vector2Int b = ParsePoint(tokens[1]);
+                Vector2Int dir = ParseDirection(tokens[2]);
+                if (dir == Vector2Int.zero) continue;
+                for (int x = Mathf.Min(a.x, b.x); x <= Mathf.Max(a.x, b.x); x++)
+                {
+                    for (int y = Mathf.Min(a.y, b.y); y <= Mathf.Max(a.y, b.y); y++)
+                    {
+                        result.currents[new Vector2Int(x, y)] = dir;
+                    }
+                }
+            }
+        }
+
+        if (boats != null)
+        {
+            foreach (var boatStr in boats)
+            {
+                if (string.IsNullOrWhiteSpace(boatStr)) continue;
+                var tokens = Tokens(boatStr);
+                if (tokens.Length < 3) continue;
+                result.boats.Add(new BoatSpawn
+                {
+                    anchor = ParsePoint(tokens[0]),
+                    length = int.Parse(tokens[1]),
+                    direction = ParseDirection(tokens[2])
+                });
+            }
+        }
+
+        if (platforms != null)
+        {
+            foreach (var platStr in platforms)
+            {
+                if (string.IsNullOrWhiteSpace(platStr)) continue;
+                var tokens = Tokens(platStr);
+                if (tokens.Length < 4) continue;
+                result.platforms.Add(new PlatformSpawn
+                {
+                    cell = ParsePoint(tokens[0]),
+                    openTurns = int.Parse(tokens[1]),
+                    closedTurns = int.Parse(tokens[2]),
+                    offset = int.Parse(tokens[3])
+                });
             }
         }
 
         Debug.Assert(playerFound, "Level '" + levelName + "' has no player start (P)!");
         Debug.Assert(exitFound, "Level '" + levelName + "' has no exit (E)!");
         return result;
+    }
+
+    private static string[] Tokens(string s)
+    {
+        return s.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static Vector2Int ParsePoint(string token)
+    {
+        var parts = token.Split(',');
+        return new Vector2Int(int.Parse(parts[0].Trim()), int.Parse(parts[1].Trim()));
+    }
+
+    private static Vector2Int ParseDirection(string word)
+    {
+        switch (word.ToLowerInvariant())
+        {
+            case "up": return Vector2Int.up;
+            case "down": return Vector2Int.down;
+            case "left": return Vector2Int.left;
+            case "right": return Vector2Int.right;
+            default: return Vector2Int.zero;
+        }
     }
 }

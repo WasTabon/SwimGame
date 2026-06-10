@@ -18,6 +18,8 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private Transform swimmersContainer;
 
     private readonly List<SwimmerBase> swimmers = new List<SwimmerBase>();
+    private readonly List<Boat> boats = new List<Boat>();
+    private readonly List<TogglePlatform> platforms = new List<TogglePlatform>();
     private LevelData currentLevel;
 
     private void Start()
@@ -50,12 +52,13 @@ public class LevelLoader : MonoBehaviour
         ParsedLevel parsed = currentLevel.Parse();
         gridManager.Build(parsed);
         SpawnSwimmers(parsed);
+        SpawnDynamics(parsed);
         player.Init(gridManager, parsed.playerStart);
         highlighter.Init(gridManager);
         highlighter.Refresh(player.GridPosition);
         cameraController.Setup(gridManager, player.transform.position);
         hud.Setup(currentLevel.levelName);
-        turnManager.Setup(swimmers);
+        turnManager.Setup(swimmers, boats, platforms);
     }
 
     private void SpawnSwimmers(ParsedLevel parsed)
@@ -109,6 +112,39 @@ public class LevelLoader : MonoBehaviour
             patrol.Init(gridManager, route[0], dir);
             patrol.SetRoute(route);
             swimmers.Add(patrol);
+        }
+    }
+
+    private void SpawnDynamics(ParsedLevel parsed)
+    {
+        foreach (var boat in boats)
+        {
+            if (boat != null) Destroy(boat.gameObject);
+        }
+        boats.Clear();
+
+        foreach (var platform in platforms)
+        {
+            if (platform != null) Destroy(platform.gameObject);
+        }
+        platforms.Clear();
+
+        foreach (var spawn in parsed.boats)
+        {
+            var go = new GameObject("Boat");
+            go.transform.SetParent(swimmersContainer, false);
+            var boat = go.AddComponent<Boat>();
+            boat.Init(gridManager, spawn.anchor, spawn.length, spawn.direction);
+            boats.Add(boat);
+        }
+
+        foreach (var spawn in parsed.platforms)
+        {
+            var go = new GameObject("Platform");
+            go.transform.SetParent(swimmersContainer, false);
+            var platform = go.AddComponent<TogglePlatform>();
+            platform.Init(gridManager, spawn.cell, spawn.openTurns, spawn.closedTurns, spawn.offset);
+            platforms.Add(platform);
         }
     }
 
