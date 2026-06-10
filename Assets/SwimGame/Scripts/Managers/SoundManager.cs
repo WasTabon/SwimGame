@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum SfxType { Tap, Step, Win, Lose, Coin }
+public enum SfxType { Tap, Step, Win, Lose, Coin, Deny }
 
 public class SoundManager : MonoBehaviour
 {
@@ -67,6 +67,7 @@ public class SoundManager : MonoBehaviour
     {
         clips[SfxType.Tap] = CreateClip("sfx_tap", 0.07f, t => Tone(t, 880f, 0.07f, 0.45f));
         clips[SfxType.Step] = CreateClip("sfx_step", 0.1f, t => Tone(t, 320f, 0.1f, 0.35f));
+        clips[SfxType.Deny] = CreateClip("sfx_deny", 0.09f, t => Tone(t, 180f, 0.09f, 0.4f));
         clips[SfxType.Coin] = CreateClip("sfx_coin", 0.22f, t =>
         {
             if (t < 0.1f) return Tone(t, 1320f, 0.1f, 0.4f);
