@@ -10,6 +10,8 @@ public class LinearSwimmer : SwimmerBase
         Direction = -Direction;
         UpdateArrow();
 
+        if (movedThisTurn) return GridPosition;
+
         next = GridPosition + Direction;
         if (CanEnter(next)) return next;
 

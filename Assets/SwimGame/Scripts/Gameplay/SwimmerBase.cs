@@ -9,15 +9,19 @@ public abstract class SwimmerBase : MonoBehaviour
     public Vector2Int GridPosition { get; protected set; }
     public Vector2Int Direction { get; protected set; }
     public bool IsMoving { get; private set; }
+    public virtual int StepsPerTurn => 1;
 
     protected GridManager grid;
-    private Transform visual;
-    private SpriteRenderer visualRenderer;
-    private Transform arrow;
+    protected Transform visual;
+    protected Transform arrow;
+    protected bool movedThisTurn;
+
+    private SpriteRenderer[] renderers;
     private Tween idleTween;
     private Sequence squashSequence;
 
     protected virtual Color BodyColor => new Color32(231, 76, 60, 255);
+    protected virtual Sprite BodySprite => SpriteFactory.Circle;
 
     public void Init(GridManager gridManager, Vector2Int start, Vector2Int direction)
     {
@@ -26,6 +30,8 @@ public abstract class SwimmerBase : MonoBehaviour
         Direction = direction;
         transform.position = grid.GridToWorld(start);
         BuildVisual();
+        BuildDecorations(visual);
+        renderers = GetComponentsInChildren<SpriteRenderer>(true);
         UpdateArrow(false);
         StartIdle();
         grid.RegisterSwimmer(this, start);
@@ -36,8 +42,8 @@ public abstract class SwimmerBase : MonoBehaviour
         var visualGo = new GameObject("Visual");
         visualGo.transform.SetParent(transform, false);
         visual = visualGo.transform;
-        visualRenderer = visualGo.AddComponent<SpriteRenderer>();
-        visualRenderer.sprite = SpriteFactory.Circle;
+        var visualRenderer = visualGo.AddComponent<SpriteRenderer>();
+        visualRenderer.sprite = BodySprite;
         visualRenderer.color = BodyColor;
         visualRenderer.sortingOrder = 8;
         visual.localScale = Vector3.one * BaseScale;
@@ -50,6 +56,15 @@ public abstract class SwimmerBase : MonoBehaviour
         arrowRenderer.sortingOrder = 9;
         arrow = arrowGo.transform;
         arrow.localScale = Vector3.one * 0.42f;
+    }
+
+    protected virtual void BuildDecorations(Transform visualParent)
+    {
+    }
+
+    public virtual void OnTurnStart()
+    {
+        movedThisTurn = false;
     }
 
     protected void UpdateArrow(bool animated = true)
@@ -92,6 +107,7 @@ public abstract class SwimmerBase : MonoBehaviour
         Vector2Int dir = cell - GridPosition;
         GridPosition = cell;
         IsMoving = true;
+        movedThisTurn = true;
 
         SplashEffect.Play(transform.position, 0.5f);
 
@@ -113,6 +129,27 @@ public abstract class SwimmerBase : MonoBehaviour
         });
     }
 
+    public void SetDim(bool dimmed)
+    {
+        float target = dimmed ? 0.45f : 1f;
+        foreach (var r in renderers)
+        {
+            if (r == null) continue;
+            r.DOKill();
+            r.DOFade(target, 0.35f);
+        }
+    }
+
+    public void PlayKillPunch()
+    {
+        squashSequence?.Kill();
+        idleTween?.Kill();
+        visual.DOKill();
+        visual.localPosition = Vector3.zero;
+        visual.localScale = Vector3.one * BaseScale;
+        visual.DOPunchScale(Vector3.one * BaseScale * 0.3f, 0.35f, 5, 0.6f);
+    }
+
     private void OnDestroy()
     {
         transform.DOKill();
@@ -120,5 +157,12 @@ public abstract class SwimmerBase : MonoBehaviour
         squashSequence?.Kill();
         if (visual != null) visual.DOKill();
         if (arrow != null) arrow.DOKill();
+        if (renderers != null)
+        {
+            foreach (var r in renderers)
+            {
+                if (r != null) r.DOKill();
+            }
+        }
     }
 }

@@ -74,12 +74,41 @@ public class LevelLoader : MonoBehaviour
             SwimmerBase swimmer;
             switch (spawn.type)
             {
+                case SwimmerType.Fast:
+                    swimmer = go.AddComponent<FastSwimmer>();
+                    break;
+                case SwimmerType.Delayed:
+                    swimmer = go.AddComponent<DelayedSwimmer>();
+                    break;
+                case SwimmerType.Reactive:
+                    swimmer = go.AddComponent<ReactiveSwimmer>();
+                    break;
                 default:
                     swimmer = go.AddComponent<LinearSwimmer>();
                     break;
             }
             swimmer.Init(gridManager, spawn.position, spawn.direction);
             swimmers.Add(swimmer);
+        }
+
+        foreach (var route in parsed.patrols)
+        {
+            var go = new GameObject("Swimmer_Patrol");
+            go.transform.SetParent(swimmersContainer, false);
+            var patrol = go.AddComponent<PatrolSwimmer>();
+
+            Vector2Int dir = Vector2Int.right;
+            if (route.Count > 1)
+            {
+                Vector2Int d = route[1] - route[0];
+                dir = new Vector2Int(System.Math.Sign(d.x), System.Math.Sign(d.y));
+                if (dir.x != 0 && dir.y != 0) dir = new Vector2Int(dir.x, 0);
+                if (dir == Vector2Int.zero) dir = Vector2Int.right;
+            }
+
+            patrol.Init(gridManager, route[0], dir);
+            patrol.SetRoute(route);
+            swimmers.Add(patrol);
         }
     }
 

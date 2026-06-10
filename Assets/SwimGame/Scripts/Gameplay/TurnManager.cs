@@ -63,9 +63,10 @@ public class TurnManager : MonoBehaviour
 
         if (!isWait)
         {
-            if (gridManager.GetSwimmerAt(player.GridPosition) != null)
+            var bumped = gridManager.GetSwimmerAt(player.GridPosition);
+            if (bumped != null)
             {
-                yield return LoseRoutine();
+                yield return LoseRoutine(bumped);
                 yield break;
             }
             if (player.GridPosition == gridManager.ExitPosition)
@@ -79,23 +80,38 @@ public class TurnManager : MonoBehaviour
         SwimmerBase killer = null;
         foreach (var swimmer in swimmers)
         {
-            Vector2Int next = swimmer.PlanMove(player.GridPosition);
-            if (next == swimmer.GridPosition) continue;
+            swimmer.OnTurnStart();
+            bool moved = false;
 
-            swimmer.MoveTo(next);
-            if (next == player.GridPosition)
+            for (int step = 0; step < swimmer.StepsPerTurn; step++)
             {
-                killer = swimmer;
-                break;
+                Vector2Int next = swimmer.PlanMove(player.GridPosition);
+                if (next == swimmer.GridPosition) break;
+
+                swimmer.MoveTo(next);
+                moved = true;
+
+                if (next == player.GridPosition)
+                {
+                    killer = swimmer;
+                    break;
+                }
+
+                if (swimmer.StepsPerTurn > 1)
+                {
+                    yield return new WaitWhile(() => swimmer.IsMoving);
+                }
             }
-            yield return new WaitForSeconds(0.05f);
+
+            if (killer != null) break;
+            if (moved) yield return new WaitForSeconds(0.05f);
         }
 
         yield return new WaitWhile(AnySwimmerMoving);
 
         if (killer != null)
         {
-            yield return LoseRoutine();
+            yield return LoseRoutine(killer);
             yield break;
         }
 
@@ -121,7 +137,7 @@ public class TurnManager : MonoBehaviour
         OnWin?.Invoke();
     }
 
-    private IEnumerator LoseRoutine()
+    private IEnumerator LoseRoutine(SwimmerBase killer)
     {
         gameOver = true;
         SoundManager.Instance.PlaySfx(SfxType.Lose);
@@ -129,6 +145,7 @@ public class TurnManager : MonoBehaviour
         CollisionEffect.Play(player.transform.position);
         cameraController.Shake();
         player.PlayDeathAnimation();
+        if (killer != null) killer.PlayKillPunch();
         yield return new WaitForSeconds(0.85f);
         OnLose?.Invoke();
     }

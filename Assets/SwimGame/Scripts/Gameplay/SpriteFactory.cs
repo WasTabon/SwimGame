@@ -5,6 +5,7 @@ public static class SpriteFactory
     private static Sprite square;
     private static Sprite circle;
     private static Sprite triangle;
+    private static Sprite diamond;
     private static Texture2D circleTexture;
 
     public static Sprite Square
@@ -31,6 +32,15 @@ public static class SpriteFactory
         {
             if (triangle == null) triangle = CreateTriangle();
             return triangle;
+        }
+    }
+
+    public static Sprite Diamond
+    {
+        get
+        {
+            if (diamond == null) diamond = CreateDiamond();
+            return diamond;
         }
     }
 
@@ -86,6 +96,25 @@ public static class SpriteFactory
             {
                 float dist = Mathf.Abs(x + 0.5f - centerX);
                 float a = Mathf.Clamp01(halfWidth - dist + 0.5f);
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+    }
+
+    private static Sprite CreateDiamond()
+    {
+        int size = 128;
+        var tex = new Texture2D(size, size);
+        float center = size / 2f;
+        float radius = center - 1f;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float d = Mathf.Abs(x + 0.5f - center) + Mathf.Abs(y + 0.5f - center);
+                float a = Mathf.Clamp01(radius - d + 0.5f);
                 tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
             }
         }

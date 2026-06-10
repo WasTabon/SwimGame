@@ -13,7 +13,7 @@ public class GameBootstrap : MonoBehaviour
             Application.targetFrameRate = 60;
             DOTween.Init();
             DOTween.SetTweensCapacity(500, 50);
-            DOTween.defaultRecyclable = true;
+            DOTween.defaultRecyclable = false;
         }
         SoundManager.Ensure();
         HapticManager.Ensure();
