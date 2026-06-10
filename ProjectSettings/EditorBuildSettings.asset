@@ -4,5 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/SwimGame/Scenes/MainMenu.unity
+    guid: 6e17c0c636b8d3e43af361c9e3c358fa
+  - enabled: 1
+    path: Assets/SwimGame/Scenes/Game.unity
+    guid: ddda43b228ff92d40b18449788c68d98
   m_configObjects: {}
