@@ -13,6 +13,7 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private InputController inputController;
     [SerializeField] private GameHUD hud;
     [SerializeField] private TurnManager turnManager;
+    [SerializeField] private ItemManager itemManager;
     [SerializeField] private WinPopup winPopup;
     [SerializeField] private LosePopup losePopup;
     [SerializeField] private Transform swimmersContainer;
@@ -59,6 +60,7 @@ public class LevelLoader : MonoBehaviour
         cameraController.Setup(gridManager, player.transform.position);
         hud.Setup(currentLevel.levelName);
         turnManager.Setup(swimmers, boats, platforms);
+        itemManager.ResetForLevel();
     }
 
     private void SpawnSwimmers(ParsedLevel parsed)
@@ -155,11 +157,17 @@ public class LevelLoader : MonoBehaviour
 
     public void DoWait()
     {
+        itemManager.CancelAim();
         turnManager.TryWait();
     }
 
     private void HandleCellTapped(Vector2Int cell)
     {
+        if (itemManager.IsAiming)
+        {
+            itemManager.HandleAimTap(cell);
+            return;
+        }
         turnManager.TryPlayerMove(cell);
     }
 

@@ -67,6 +67,13 @@ public abstract class SwimmerBase : MonoBehaviour
         movedThisTurn = false;
     }
 
+    public void FaceDirection(Vector2Int dir)
+    {
+        if (dir == Vector2Int.zero) return;
+        Direction = dir;
+        UpdateArrow();
+    }
+
     protected void UpdateArrow(bool animated = true)
     {
         Vector3 dir = new Vector3(Direction.x, Direction.y, 0f);

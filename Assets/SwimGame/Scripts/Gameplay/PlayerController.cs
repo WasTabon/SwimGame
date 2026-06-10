@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     private Transform visual;
     private Tween idleTween;
     private Sequence squashSequence;
+    private GameObject shieldGo;
+    private Tween shieldTween;
 
     private void Awake()
     {
@@ -31,6 +33,7 @@ public class PlayerController : MonoBehaviour
         GridPosition = start;
         transform.DOKill();
         KillVisualTweens();
+        SetShield(false);
         IsMoving = false;
         transform.position = grid.GridToWorld(start);
         visual.localPosition = Vector3.zero;
@@ -104,6 +107,29 @@ public class PlayerController : MonoBehaviour
             IsMoving = false;
             StartIdle();
         });
+    }
+
+    public void SetShield(bool active)
+    {
+        if (active)
+        {
+            if (shieldGo != null) return;
+            shieldGo = new GameObject("Shield");
+            shieldGo.transform.SetParent(transform, false);
+            var sr = shieldGo.AddComponent<SpriteRenderer>();
+            sr.sprite = SpriteFactory.Circle;
+            sr.color = new Color(0.36f, 0.85f, 0.95f, 0.4f);
+            sr.sortingOrder = 9;
+            shieldGo.transform.localScale = Vector3.one * 1.05f;
+            shieldTween = shieldGo.transform.DOScale(1.18f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+        }
+        else
+        {
+            if (shieldGo == null) return;
+            shieldTween?.Kill();
+            Destroy(shieldGo);
+            shieldGo = null;
+        }
     }
 
     public void PlayWinAnimation()
