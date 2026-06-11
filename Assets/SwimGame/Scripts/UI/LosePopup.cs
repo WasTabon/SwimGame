@@ -20,6 +20,6 @@ public class LosePopup : PopupBase
 
     private void OnMenu()
     {
-        TransitionManager.Instance.LoadScene("MainMenu");
+        TransitionManager.Instance.LoadScene("LevelSelect");
     }
 }

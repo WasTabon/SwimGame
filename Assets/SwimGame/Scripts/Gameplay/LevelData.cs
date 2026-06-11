@@ -46,6 +46,7 @@ public class ParsedLevel
 public class LevelData : ScriptableObject
 {
     public string levelName = "Level";
+    public int optimalMoves = 10;
     [TextArea(5, 30)] public string layout;
     public List<string> patrolRoutes = new List<string>();
     public List<string> currentZones = new List<string>();

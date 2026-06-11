@@ -16,7 +16,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnPlay()
     {
-        TransitionManager.Instance.LoadScene("Game");
+        TransitionManager.Instance.LoadScene("LevelSelect");
     }
 
     private void OnSettings()

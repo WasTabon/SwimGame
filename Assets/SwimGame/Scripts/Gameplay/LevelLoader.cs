@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class LevelLoader : MonoBehaviour
 {
+    public static int SelectedLevelIndex = -1;
     public static LevelData SelectedLevel;
 
+    [SerializeField] private LevelDatabase database;
     [SerializeField] private LevelData defaultLevel;
     [SerializeField] private GridManager gridManager;
     [SerializeField] private PlayerController player;
@@ -23,11 +25,11 @@ public class LevelLoader : MonoBehaviour
     private readonly List<TogglePlatform> platforms = new List<TogglePlatform>();
     private LevelData currentLevel;
 
+    private bool HasDatabaseLevel =>
+        database != null && SelectedLevelIndex >= 0 && SelectedLevelIndex < database.levels.Count;
+
     private void Start()
     {
-        currentLevel = SelectedLevel != null ? SelectedLevel : defaultLevel;
-        Debug.Assert(currentLevel != null, "No level assigned to LevelLoader!");
-
         inputController.OnCellTapped -= HandleCellTapped;
         inputController.OnCellTapped += HandleCellTapped;
         turnManager.OnWin -= HandleWin;
@@ -48,8 +50,21 @@ public class LevelLoader : MonoBehaviour
         }
     }
 
+    private void ResolveCurrentLevel()
+    {
+        if (HasDatabaseLevel)
+        {
+            currentLevel = database.levels[SelectedLevelIndex];
+            return;
+        }
+        currentLevel = SelectedLevel != null ? SelectedLevel : defaultLevel;
+    }
+
     private void BuildLevel()
     {
+        ResolveCurrentLevel();
+        Debug.Assert(currentLevel != null, "No level assigned to LevelLoader!");
+
         ParsedLevel parsed = currentLevel.Parse();
         gridManager.Build(parsed);
         SpawnSwimmers(parsed);
@@ -155,6 +170,17 @@ public class LevelLoader : MonoBehaviour
         BuildLevel();
     }
 
+    public void NextLevel()
+    {
+        if (HasDatabaseLevel && SelectedLevelIndex + 1 < database.levels.Count)
+        {
+            SelectedLevelIndex++;
+            BuildLevel();
+            return;
+        }
+        TransitionManager.Instance.LoadScene("LevelSelect");
+    }
+
     public void DoWait()
     {
         itemManager.CancelAim();
@@ -173,7 +199,14 @@ public class LevelLoader : MonoBehaviour
 
     private void HandleWin()
     {
-        winPopup.ShowWithMoves(hud.MovesCount);
+        int stars = ProgressManager.CalculateStars(hud.MovesCount, currentLevel.optimalMoves);
+        bool hasNext = false;
+        if (HasDatabaseLevel)
+        {
+            ProgressManager.SetStars(SelectedLevelIndex, stars);
+            hasNext = SelectedLevelIndex + 1 < database.levels.Count;
+        }
+        winPopup.ShowResult(hud.MovesCount, currentLevel.optimalMoves, stars, hasNext);
     }
 
     private void HandleLose()
