@@ -8,12 +8,19 @@ public class CameraController : MonoBehaviour
     private const float FitMargin = 1.2f;
     private const float ClampMargin = 1f;
 
+    [SerializeField] private float bottomUiFraction = 0.27f;
+    [SerializeField] private float topUiFraction = 0.16f;
+
     private Camera cam;
     private Bounds fieldBounds;
     private bool scrollEnabled;
     private Vector3 dragOriginWorld;
     private Vector3 lastDragDelta;
     private Tween moveTween;
+
+    private float VisibleFraction => Mathf.Max(0.2f, 1f - bottomUiFraction - topUiFraction);
+
+    private float WindowOffsetY => cam.orthographicSize * (bottomUiFraction - topUiFraction);
 
     private void Awake()
     {
@@ -30,7 +37,7 @@ public class CameraController : MonoBehaviour
             0f);
         fieldBounds = new Bounds(center, new Vector3(w, h, 0f));
 
-        float neededHalfHeight = h * 0.5f + FitMargin;
+        float neededHalfHeight = (h * 0.5f + FitMargin) / VisibleFraction;
         float neededHalfHeightFromWidth = (w * 0.5f + FitMargin) / cam.aspect;
         float neededSize = Mathf.Max(neededHalfHeight, neededHalfHeightFromWidth);
 
@@ -41,13 +48,13 @@ public class CameraController : MonoBehaviour
         {
             scrollEnabled = false;
             cam.orthographicSize = neededSize;
-            transform.position = new Vector3(center.x, center.y + neededSize * 0.06f, -10f);
+            transform.position = new Vector3(center.x, center.y - WindowOffsetY, -10f);
         }
         else
         {
             scrollEnabled = true;
             cam.orthographicSize = MaxOrthoSize;
-            transform.position = ClampPosition(new Vector3(focusPos.x, focusPos.y, -10f));
+            transform.position = ClampPosition(new Vector3(focusPos.x, focusPos.y - WindowOffsetY, -10f));
         }
     }
 
@@ -90,15 +97,16 @@ public class CameraController : MonoBehaviour
     public void EnsureVisible(Vector3 worldPos)
     {
         if (!scrollEnabled) return;
-        float halfH = cam.orthographicSize * 0.6f;
+        float halfH = cam.orthographicSize * VisibleFraction * 0.6f;
         float halfW = cam.orthographicSize * cam.aspect * 0.6f;
         Vector3 pos = transform.position;
+        float windowCenterY = pos.y + WindowOffsetY;
         Vector3 delta = Vector3.zero;
 
         if (worldPos.x > pos.x + halfW) delta.x = worldPos.x - (pos.x + halfW);
         if (worldPos.x < pos.x - halfW) delta.x = worldPos.x - (pos.x - halfW);
-        if (worldPos.y > pos.y + halfH) delta.y = worldPos.y - (pos.y + halfH);
-        if (worldPos.y < pos.y - halfH) delta.y = worldPos.y - (pos.y - halfH);
+        if (worldPos.y > windowCenterY + halfH) delta.y = worldPos.y - (windowCenterY + halfH);
+        if (worldPos.y < windowCenterY - halfH) delta.y = worldPos.y - (windowCenterY - halfH);
 
         if (delta == Vector3.zero) return;
 
@@ -108,16 +116,18 @@ public class CameraController : MonoBehaviour
 
     private Vector3 ClampPosition(Vector3 pos)
     {
-        float halfH = cam.orthographicSize;
-        float halfW = halfH * cam.aspect;
+        float size = cam.orthographicSize;
+        float halfW = size * cam.aspect;
+        float windowHalfUp = size * (1f - 2f * topUiFraction);
+        float windowHalfDown = size * (1f - 2f * bottomUiFraction);
 
         float minX = fieldBounds.min.x + halfW - ClampMargin;
         float maxX = fieldBounds.max.x - halfW + ClampMargin;
-        float minY = fieldBounds.min.y + halfH - ClampMargin;
-        float maxY = fieldBounds.max.y - halfH + ClampMargin;
+        float minY = fieldBounds.min.y + windowHalfDown - ClampMargin;
+        float maxY = fieldBounds.max.y - windowHalfUp + ClampMargin;
 
         pos.x = minX > maxX ? fieldBounds.center.x : Mathf.Clamp(pos.x, minX, maxX);
-        pos.y = minY > maxY ? fieldBounds.center.y : Mathf.Clamp(pos.y, minY, maxY);
+        pos.y = minY > maxY ? fieldBounds.center.y - WindowOffsetY : Mathf.Clamp(pos.y, minY, maxY);
         pos.z = -10f;
         return pos;
     }
