@@ -6,6 +6,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button playButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button shopButton;
+    [SerializeField] private SettingsPopup settingsPopup;
 
     private void Awake()
     {
@@ -21,6 +22,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnSettings()
     {
+        if (settingsPopup != null) settingsPopup.Show();
     }
 
     private void OnShop()

@@ -16,6 +16,7 @@ public class TurnManager : MonoBehaviour
 
     public event System.Action OnWin;
     public event System.Action OnLose;
+    public event System.Action OnTurnEnded;
 
     private readonly List<SwimmerBase> swimmers = new List<SwimmerBase>();
     private readonly List<Boat> boats = new List<Boat>();
@@ -199,6 +200,7 @@ public class TurnManager : MonoBehaviour
         }
         highlighter.Refresh(player.GridPosition);
         busy = false;
+        OnTurnEnded?.Invoke();
     }
 
     private IEnumerator CheckPlayerCell()

@@ -20,6 +20,7 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private GameHUD hud;
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private ItemManager itemManager;
+    [SerializeField] private TutorialController tutorialController;
     [SerializeField] private WinPopup winPopup;
     [SerializeField] private LosePopup losePopup;
     [SerializeField] private Transform swimmersContainer;
@@ -80,6 +81,10 @@ public class LevelLoader : MonoBehaviour
         hud.Setup(currentLevel.levelName);
         turnManager.Setup(swimmers, boats, platforms);
         itemManager.ResetForLevel();
+        if (tutorialController != null)
+        {
+            tutorialController.Begin(HasDatabaseLevel ? SelectedLevelIndex : -1);
+        }
     }
 
     private void SpawnSwimmers(ParsedLevel parsed)

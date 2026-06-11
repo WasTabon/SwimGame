@@ -10,6 +10,8 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI coinsText;
     [SerializeField] private RectTransform coinIcon;
     [SerializeField] private Button backButton;
+    [SerializeField] private Button pauseButton;
+    [SerializeField] private PausePopup pausePopup;
     [SerializeField] private Button waitButton;
     [SerializeField] private Button restartButton;
     [SerializeField] private LevelLoader levelLoader;
@@ -26,6 +28,7 @@ public class GameHUD : MonoBehaviour
         backButton.onClick.AddListener(OnBack);
         waitButton.onClick.AddListener(OnWait);
         restartButton.onClick.AddListener(OnRestart);
+        pauseButton.onClick.AddListener(OnPause);
         if (coinIcon != null)
         {
             foreach (var img in coinIcon.GetComponentsInChildren<Image>())
@@ -71,6 +74,11 @@ public class GameHUD : MonoBehaviour
         movesText.text = "Moves: " + moves;
         movesText.transform.DOKill(true);
         movesText.transform.DOPunchScale(Vector3.one * 0.12f, 0.18f, 1, 0.5f);
+    }
+
+    private void OnPause()
+    {
+        pausePopup.Show();
     }
 
     private void OnBack()
