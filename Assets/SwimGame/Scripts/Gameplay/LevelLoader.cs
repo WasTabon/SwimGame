@@ -78,7 +78,7 @@ public class LevelLoader : MonoBehaviour
         highlighter.Init(gridManager);
         highlighter.Refresh(player.GridPosition);
         cameraController.Setup(gridManager, player.transform.position);
-        hud.Setup(currentLevel.levelName);
+        hud.Setup(currentLevel.levelName, currentLevel.optimalMoves);
         turnManager.Setup(swimmers, boats, platforms);
         itemManager.ResetForLevel();
         if (tutorialController != null)

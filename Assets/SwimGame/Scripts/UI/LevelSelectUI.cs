@@ -118,6 +118,9 @@ public class LevelSelectUI : MonoBehaviour
             group.alpha = 0.45f;
             button.interactable = false;
         }
+
+        cellGo.transform.localScale = Vector3.zero;
+        cellGo.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack).SetDelay(index * 0.02f);
     }
 
     private void OnLevelClicked(int index)

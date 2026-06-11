@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private Tween idleTween;
     private Sequence squashSequence;
     private GameObject shieldGo;
+    private SpriteRenderer shieldRenderer;
     private Tween shieldTween;
 
     private void Awake()
@@ -116,20 +117,42 @@ public class PlayerController : MonoBehaviour
             if (shieldGo != null) return;
             shieldGo = new GameObject("Shield");
             shieldGo.transform.SetParent(transform, false);
-            var sr = shieldGo.AddComponent<SpriteRenderer>();
-            sr.sprite = SpriteFactory.Circle;
-            sr.color = new Color(0.36f, 0.85f, 0.95f, 0.4f);
-            sr.sortingOrder = 9;
+            shieldRenderer = shieldGo.AddComponent<SpriteRenderer>();
+            shieldRenderer.sprite = SpriteFactory.Circle;
+            shieldRenderer.color = new Color(0.36f, 0.85f, 0.95f, 0.4f);
+            shieldRenderer.sortingOrder = 9;
             shieldGo.transform.localScale = Vector3.one * 1.05f;
-            shieldTween = shieldGo.transform.DOScale(1.18f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+            StartShieldPulse();
         }
         else
         {
             if (shieldGo == null) return;
             shieldTween?.Kill();
+            shieldRenderer.DOKill();
             Destroy(shieldGo);
             shieldGo = null;
+            shieldRenderer = null;
         }
+    }
+
+    private void StartShieldPulse()
+    {
+        if (shieldGo == null) return;
+        shieldTween?.Kill();
+        shieldGo.transform.localScale = Vector3.one * 1.05f;
+        shieldTween = shieldGo.transform.DOScale(1.18f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+    }
+
+    public void PulseShield()
+    {
+        if (shieldGo == null) return;
+        shieldRenderer.DOKill();
+        shieldRenderer.color = new Color(0.36f, 0.85f, 0.95f, 0.85f);
+        shieldRenderer.DOFade(0.4f, 0.4f).SetEase(Ease.OutQuad);
+        shieldTween?.Kill();
+        shieldGo.transform.localScale = Vector3.one * 1.05f;
+        shieldTween = shieldGo.transform.DOPunchScale(Vector3.one * 0.28f, 0.32f, 4, 0.6f)
+            .OnComplete(StartShieldPulse);
     }
 
     public void PlayWinAnimation()

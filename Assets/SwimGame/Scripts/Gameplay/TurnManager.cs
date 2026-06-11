@@ -230,12 +230,19 @@ public class TurnManager : MonoBehaviour
             if (attracted)
             {
                 Vector2Int next = PlanAttractedMove(swimmer);
-                if (next != swimmer.GridPosition && !(ShieldActive && next == player.GridPosition))
+                if (next != swimmer.GridPosition)
                 {
-                    swimmer.FaceDirection(next - swimmer.GridPosition);
-                    swimmer.MoveTo(next);
-                    moved = true;
-                    if (next == player.GridPosition) killer = swimmer;
+                    if (ShieldActive && next == player.GridPosition)
+                    {
+                        OnShieldBlock();
+                    }
+                    else
+                    {
+                        swimmer.FaceDirection(next - swimmer.GridPosition);
+                        swimmer.MoveTo(next);
+                        moved = true;
+                        if (next == player.GridPosition) killer = swimmer;
+                    }
                 }
             }
             else
@@ -244,7 +251,11 @@ public class TurnManager : MonoBehaviour
                 {
                     Vector2Int next = swimmer.PlanMove(player.GridPosition);
                     if (next == swimmer.GridPosition) break;
-                    if (ShieldActive && next == player.GridPosition) break;
+                    if (ShieldActive && next == player.GridPosition)
+                    {
+                        OnShieldBlock();
+                        break;
+                    }
 
                     swimmer.MoveTo(next);
                     moved = true;
@@ -286,6 +297,7 @@ public class TurnManager : MonoBehaviour
         {
             Vector2Int dest = player.GridPosition + playerCurrent;
             bool shieldBlocked = ShieldActive && gridManager.GetSwimmerAt(dest) != null;
+            if (shieldBlocked) OnShieldBlock();
             if (gridManager.IsWalkable(dest) && !shieldBlocked)
             {
                 var hit = gridManager.GetSwimmerAt(dest);
@@ -315,7 +327,11 @@ public class TurnManager : MonoBehaviour
             Vector2Int dest = swimmer.GridPosition + flow;
             if (!gridManager.IsWalkable(dest)) continue;
             if (gridManager.GetSwimmerAt(dest) != null) continue;
-            if (ShieldActive && dest == player.GridPosition) continue;
+            if (ShieldActive && dest == player.GridPosition)
+            {
+                OnShieldBlock();
+                continue;
+            }
 
             swimmer.MoveTo(dest);
             if (dest == player.GridPosition)
@@ -400,10 +416,18 @@ public class TurnManager : MonoBehaviour
         return false;
     }
 
+    private void OnShieldBlock()
+    {
+        player.PulseShield();
+        SoundManager.Instance.PlaySfx(SfxType.Tap);
+        HapticManager.Instance.Vibrate();
+    }
+
     private IEnumerator WinRoutine()
     {
         gameOver = true;
         SoundManager.Instance.PlaySfx(SfxType.Win);
+        HapticManager.Instance.Vibrate();
         player.PlayWinAnimation();
         yield return new WaitForSeconds(0.9f);
         OnWin?.Invoke();

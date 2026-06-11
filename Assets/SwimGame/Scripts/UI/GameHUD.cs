@@ -17,6 +17,7 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private LevelLoader levelLoader;
 
     private int moves;
+    private int optimalMoves = 10;
     private int displayedCoins;
     private Tween coinsTween;
 
@@ -61,19 +62,28 @@ public class GameHUD : MonoBehaviour
         }).SetEase(Ease.OutQuad);
     }
 
-    public void Setup(string levelName)
+    public void Setup(string levelName, int levelOptimalMoves)
     {
         levelNameText.text = levelName;
         moves = 0;
-        movesText.text = "Moves: 0";
+        optimalMoves = levelOptimalMoves;
+        UpdateMovesText();
     }
 
     public void IncrementMoves()
     {
         moves++;
-        movesText.text = "Moves: " + moves;
+        UpdateMovesText();
         movesText.transform.DOKill(true);
         movesText.transform.DOPunchScale(Vector3.one * 0.12f, 0.18f, 1, 0.5f);
+    }
+
+    private void UpdateMovesText()
+    {
+        movesText.text = "Moves: " + moves + " / " + optimalMoves;
+        if (moves <= optimalMoves) movesText.color = Color.white;
+        else if (moves <= optimalMoves + 3) movesText.color = new Color32(245, 166, 35, 255);
+        else movesText.color = new Color32(231, 76, 60, 255);
     }
 
     private void OnPause()

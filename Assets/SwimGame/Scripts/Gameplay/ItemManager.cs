@@ -22,6 +22,21 @@ public class ItemManager : MonoBehaviour
 
     public bool IsAiming => aiming.HasValue;
 
+    private void OnEnable()
+    {
+        ItemInventory.OnChanged += HandleInventoryChanged;
+    }
+
+    private void OnDisable()
+    {
+        ItemInventory.OnChanged -= HandleInventoryChanged;
+    }
+
+    private void HandleInventoryChanged()
+    {
+        if (!debugGrantItems) PushCounts();
+    }
+
     public void ResetForLevel()
     {
         CancelAim();

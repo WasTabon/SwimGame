@@ -60,6 +60,7 @@ public class WinPopup : PopupBase
                 {
                     starImages[captured].color = StarOnColor;
                     SoundManager.Instance.PlaySfx(SfxType.Coin);
+                    HapticManager.Instance.Vibrate();
                 });
             }
         }

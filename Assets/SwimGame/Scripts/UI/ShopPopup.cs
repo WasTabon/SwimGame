@@ -17,7 +17,6 @@ public class ShopPopup : PopupBase
     [SerializeField] private TextMeshProUGUI ballCountText;
     [SerializeField] private TextMeshProUGUI shieldCountText;
     [SerializeField] private Button closeButton;
-    [SerializeField] private ItemManager itemManager;
 
     private void Awake()
     {
@@ -30,12 +29,14 @@ public class ShopPopup : PopupBase
     private void OnEnable()
     {
         CurrencyManager.OnBalanceChanged += HandleBalanceChanged;
+        ItemInventory.OnChanged += Refresh;
         Refresh();
     }
 
     private void OnDisable()
     {
         CurrencyManager.OnBalanceChanged -= HandleBalanceChanged;
+        ItemInventory.OnChanged -= Refresh;
     }
 
     private void HandleBalanceChanged(int balance)
@@ -47,9 +48,9 @@ public class ShopPopup : PopupBase
     {
         int balance = CurrencyManager.Balance;
         balanceText.text = "Coins: " + balance;
-        flippersCountText.text = "x" + itemManager.GetCount(ItemType.Flippers);
-        ballCountText.text = "x" + itemManager.GetCount(ItemType.Ball);
-        shieldCountText.text = "x" + itemManager.GetCount(ItemType.Shield);
+        flippersCountText.text = "x" + ItemInventory.Get(ItemType.Flippers);
+        ballCountText.text = "x" + ItemInventory.Get(ItemType.Ball);
+        shieldCountText.text = "x" + ItemInventory.Get(ItemType.Shield);
         SetAffordable(flippersBuyButton, balance >= FlippersPrice);
         SetAffordable(ballBuyButton, balance >= BallPrice);
         SetAffordable(shieldBuyButton, balance >= ShieldPrice);
@@ -73,7 +74,5 @@ public class ShopPopup : PopupBase
         ItemInventory.Add(type, 1);
         SoundManager.Instance.PlaySfx(SfxType.Coin);
         HapticManager.Instance.Vibrate();
-        itemManager.RefreshCounts();
-        Refresh();
     }
 }
