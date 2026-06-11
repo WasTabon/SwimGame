@@ -12,10 +12,11 @@ public class ItemManager : MonoBehaviour
     [SerializeField] private PlayerController player;
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private ItemBarUI itemBar;
-    [SerializeField] private bool debugGrantItems = true;
+    [SerializeField] private ShopPopup shopPopup;
+    [SerializeField] private bool debugGrantItems = false;
     [SerializeField] private int debugGrantCount = 3;
 
-    private readonly Dictionary<ItemType, int> counts = new Dictionary<ItemType, int>();
+    private readonly Dictionary<ItemType, int> sessionCounts = new Dictionary<ItemType, int>();
     private ItemType? aiming;
     private readonly List<GameObject> aimMarkers = new List<GameObject>();
 
@@ -24,17 +25,47 @@ public class ItemManager : MonoBehaviour
     public void ResetForLevel()
     {
         CancelAim();
-        int amount = debugGrantItems ? debugGrantCount : 0;
-        counts[ItemType.Flippers] = amount;
-        counts[ItemType.Ball] = amount;
-        counts[ItemType.Shield] = amount;
+        if (debugGrantItems)
+        {
+            sessionCounts[ItemType.Flippers] = debugGrantCount;
+            sessionCounts[ItemType.Ball] = debugGrantCount;
+            sessionCounts[ItemType.Shield] = debugGrantCount;
+        }
         PushCounts();
     }
 
     public int GetCount(ItemType type)
     {
-        counts.TryGetValue(type, out int c);
-        return c;
+        if (debugGrantItems)
+        {
+            sessionCounts.TryGetValue(type, out int c);
+            return c;
+        }
+        return ItemInventory.Get(type);
+    }
+
+    private bool ConsumeOne(ItemType type)
+    {
+        if (debugGrantItems)
+        {
+            int c = GetCount(type);
+            if (c <= 0) return false;
+            sessionCounts[type] = c - 1;
+            return true;
+        }
+        return ItemInventory.TryConsume(type);
+    }
+
+    public void OpenShop()
+    {
+        if (turnManager.IsBusy) return;
+        CancelAim();
+        if (shopPopup != null) shopPopup.Show();
+    }
+
+    public void RefreshCounts()
+    {
+        PushCounts();
     }
 
     public void OnItemButton(ItemType type)
@@ -45,6 +76,7 @@ public class ItemManager : MonoBehaviour
         {
             SoundManager.Instance.PlaySfx(SfxType.Deny);
             CancelAim();
+            if (shopPopup != null) shopPopup.Show();
             return;
         }
 
@@ -113,7 +145,7 @@ public class ItemManager : MonoBehaviour
 
     private void Consume(ItemType type)
     {
-        counts[type] = Mathf.Max(0, GetCount(type) - 1);
+        ConsumeOne(type);
         PushCounts();
     }
 

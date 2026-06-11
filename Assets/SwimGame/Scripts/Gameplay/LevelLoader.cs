@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class LevelLoader : MonoBehaviour
 {
+    private const int BaseReward = 10;
+    private const int StarReward = 5;
+    private const int RepeatReward = 5;
+
     public static int SelectedLevelIndex = -1;
     public static LevelData SelectedLevel;
 
@@ -201,12 +205,15 @@ public class LevelLoader : MonoBehaviour
     {
         int stars = ProgressManager.CalculateStars(hud.MovesCount, currentLevel.optimalMoves);
         bool hasNext = false;
+        int reward = 0;
         if (HasDatabaseLevel)
         {
+            int previousStars = ProgressManager.GetStars(SelectedLevelIndex);
             ProgressManager.SetStars(SelectedLevelIndex, stars);
             hasNext = SelectedLevelIndex + 1 < database.levels.Count;
+            reward = stars > previousStars ? BaseReward + stars * StarReward : RepeatReward;
         }
-        winPopup.ShowResult(hud.MovesCount, currentLevel.optimalMoves, stars, hasNext);
+        winPopup.ShowResult(hud.MovesCount, currentLevel.optimalMoves, stars, hasNext, reward);
     }
 
     private void HandleLose()

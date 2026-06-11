@@ -13,10 +13,35 @@ public class LevelSelectUI : MonoBehaviour
     [SerializeField] private LevelDatabase database;
     [SerializeField] private Button backButton;
     [SerializeField] private RectTransform gridContainer;
+    [SerializeField] private TextMeshProUGUI coinsText;
+    [SerializeField] private RectTransform coinIcon;
 
     private void Awake()
     {
         backButton.onClick.AddListener(OnBack);
+        if (coinIcon != null)
+        {
+            foreach (var img in coinIcon.GetComponentsInChildren<Image>())
+            {
+                img.sprite = SpriteFactory.Circle;
+            }
+        }
+    }
+
+    private void OnEnable()
+    {
+        UpdateCoins(CurrencyManager.Balance);
+        CurrencyManager.OnBalanceChanged += UpdateCoins;
+    }
+
+    private void OnDisable()
+    {
+        CurrencyManager.OnBalanceChanged -= UpdateCoins;
+    }
+
+    private void UpdateCoins(int balance)
+    {
+        if (coinsText != null) coinsText.text = balance.ToString();
     }
 
     private void Start()

@@ -9,6 +9,7 @@ public class ItemBarUI : MonoBehaviour
     [SerializeField] private Button flippersButton;
     [SerializeField] private Button ballButton;
     [SerializeField] private Button shieldButton;
+    [SerializeField] private Button shopButton;
     [SerializeField] private TextMeshProUGUI flippersCountText;
     [SerializeField] private TextMeshProUGUI ballCountText;
     [SerializeField] private TextMeshProUGUI shieldCountText;
@@ -18,6 +19,7 @@ public class ItemBarUI : MonoBehaviour
         flippersButton.onClick.AddListener(() => itemManager.OnItemButton(ItemType.Flippers));
         ballButton.onClick.AddListener(() => itemManager.OnItemButton(ItemType.Ball));
         shieldButton.onClick.AddListener(() => itemManager.OnItemButton(ItemType.Shield));
+        shopButton.onClick.AddListener(() => itemManager.OpenShop());
     }
 
     public void SetCounts(int flippers, int ball, int shield)
