@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
     private const float MoveDuration = 0.22f;
 
     [SerializeField] private SpriteRenderer visualRenderer;
+    [SerializeField] private Sprite bodySprite;
 
     public Vector2Int GridPosition { get; private set; }
     public bool IsMoving { get; private set; }
@@ -22,7 +23,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         visual = visualRenderer.transform;
-        visualRenderer.sprite = SpriteFactory.Circle;
+        visualRenderer.sprite = bodySprite != null ? bodySprite : SpriteFactory.Circle;
         visualRenderer.color = Color.white;
         visualRenderer.sortingOrder = 10;
         visual.localScale = Vector3.one * BaseScale;

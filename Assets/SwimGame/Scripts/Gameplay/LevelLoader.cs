@@ -24,6 +24,11 @@ public class LevelLoader : MonoBehaviour
     [SerializeField] private WinPopup winPopup;
     [SerializeField] private LosePopup losePopup;
     [SerializeField] private Transform swimmersContainer;
+    [SerializeField] private Sprite linearSprite;
+    [SerializeField] private Sprite fastSprite;
+    [SerializeField] private Sprite delayedSprite;
+    [SerializeField] private Sprite reactiveSprite;
+    [SerializeField] private Sprite patrolSprite;
 
     private readonly List<SwimmerBase> swimmers = new List<SwimmerBase>();
     private readonly List<Boat> boats = new List<Boat>();
@@ -116,6 +121,7 @@ public class LevelLoader : MonoBehaviour
                     swimmer = go.AddComponent<LinearSwimmer>();
                     break;
             }
+            swimmer.OverrideSprite = SpriteForType(spawn.type);
             swimmer.Init(gridManager, spawn.position, spawn.direction);
             swimmers.Add(swimmer);
         }
@@ -125,6 +131,7 @@ public class LevelLoader : MonoBehaviour
             var go = new GameObject("Swimmer_Patrol");
             go.transform.SetParent(swimmersContainer, false);
             var patrol = go.AddComponent<PatrolSwimmer>();
+            patrol.OverrideSprite = patrolSprite;
 
             Vector2Int dir = Vector2Int.right;
             if (route.Count > 1)
@@ -138,6 +145,17 @@ public class LevelLoader : MonoBehaviour
             patrol.Init(gridManager, route[0], dir);
             patrol.SetRoute(route);
             swimmers.Add(patrol);
+        }
+    }
+
+    private Sprite SpriteForType(SwimmerType type)
+    {
+        switch (type)
+        {
+            case SwimmerType.Fast: return fastSprite;
+            case SwimmerType.Delayed: return delayedSprite;
+            case SwimmerType.Reactive: return reactiveSprite;
+            default: return linearSprite;
         }
     }
 

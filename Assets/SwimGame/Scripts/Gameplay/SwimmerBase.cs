@@ -20,6 +20,8 @@ public abstract class SwimmerBase : MonoBehaviour
     private Tween idleTween;
     private Sequence squashSequence;
 
+    public Sprite OverrideSprite;
+
     protected virtual Color BodyColor => new Color32(231, 76, 60, 255);
     protected virtual Sprite BodySprite => SpriteFactory.Circle;
 
@@ -30,7 +32,7 @@ public abstract class SwimmerBase : MonoBehaviour
         Direction = direction;
         transform.position = grid.GridToWorld(start);
         BuildVisual();
-        BuildDecorations(visual);
+        if (OverrideSprite == null) BuildDecorations(visual);
         renderers = GetComponentsInChildren<SpriteRenderer>(true);
         UpdateArrow(false);
         StartIdle();
@@ -43,8 +45,16 @@ public abstract class SwimmerBase : MonoBehaviour
         visualGo.transform.SetParent(transform, false);
         visual = visualGo.transform;
         var visualRenderer = visualGo.AddComponent<SpriteRenderer>();
-        visualRenderer.sprite = BodySprite;
-        visualRenderer.color = BodyColor;
+        if (OverrideSprite != null)
+        {
+            visualRenderer.sprite = OverrideSprite;
+            visualRenderer.color = Color.white;
+        }
+        else
+        {
+            visualRenderer.sprite = BodySprite;
+            visualRenderer.color = BodyColor;
+        }
         visualRenderer.sortingOrder = 8;
         visual.localScale = Vector3.one * BaseScale;
 
